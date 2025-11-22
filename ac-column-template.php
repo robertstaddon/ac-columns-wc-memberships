@@ -3,7 +3,8 @@
  * Plugin Name: Admin Columns - WooCommerce Memberships Profile Fields
  * Plugin URI: https://admincolumns.com
  * Description: Dynamic columns for WooCommerce Memberships Profile Fields in Admin Columns Pro
- * Version: 1.1
+ * Version: 1.2
+ * Author: Abundant Designs LLC
  * Requires PHP: 7.2
  */
 

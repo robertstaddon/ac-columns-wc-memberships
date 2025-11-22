@@ -1,9 +1,10 @@
 === Admin Columns - WooCommerce Memberships Profile Fields ===
-Contributors: admincolumns
+Contributors: abundantdesigns
+Author: Abundant Designs LLC
 Tags: admin-columns, woocommerce, memberships, profile-fields, columns
 Requires at least: 3.5
 Tested up to: 6.4
-Stable tag: 1.1
+Stable tag: 1.2
 Requires PHP: 7.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html

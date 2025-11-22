@@ -43,12 +43,30 @@ class Column extends AC\Column
 
     /**
      * Get the profile field slug.
+     * Extracts from column type if not set in constructor (e.g., when loaded from saved config).
      *
      * @return string
      */
     public function get_profile_field_slug(): string
     {
-        return $this->profile_field_slug;
+        // If slug is already set, return it
+        if (!empty($this->profile_field_slug)) {
+            return $this->profile_field_slug;
+        }
+
+        // Extract slug from column type identifier
+        // Column type format: ac-wc-memberships-profile-field-{slug}
+        $type = $this->get_type();
+        $prefix = 'ac-wc-memberships-profile-field-';
+        
+        if (strpos($type, $prefix) === 0) {
+            $slug = substr($type, strlen($prefix));
+            // Cache it for future use
+            $this->profile_field_slug = $slug;
+            return $slug;
+        }
+
+        return '';
     }
 
     /**
@@ -58,7 +76,39 @@ class Column extends AC\Column
      */
     public function get_meta_key(): string
     {
-        return '_wc_memberships_profile_field_' . $this->profile_field_slug;
+        $slug = $this->get_profile_field_slug();
+        return '_wc_memberships_profile_field_' . $slug;
+    }
+
+    /**
+     * Get the column group.
+     *
+     * @return string
+     */
+    public function get_group(): string
+    {
+        return 'woocommerce';
+    }
+
+    /**
+     * Get the raw value (for sorting, filtering, etc.)
+     *
+     * @param int $id Post ID
+     * @return mixed
+     */
+    public function get_raw_value($id)
+    {
+        // Get the post author ID (user ID) from the membership post
+        $user_id = (int) get_post_field('post_author', $id);
+        
+        if (!$user_id) {
+            return '';
+        }
+
+        $meta_key = $this->get_meta_key();
+        $value = get_user_meta($user_id, $meta_key, true);
+
+        return $value;
     }
 
     /**
@@ -66,19 +116,19 @@ class Column extends AC\Column
      */
     public function get_value($id): string
     {
-        // Get the post author ID (user ID) from the membership post
-        $post = get_post($id);
-        if (!$post || !$post->post_author) {
-            return '-';
+        $value = $this->get_raw_value($id);
+
+        // Handle empty values (but allow '0' and false)
+        if ($value === '' || $value === null || $value === false) {
+            return $this->get_empty_char();
         }
 
-        $user_id = (int) $post->post_author;
-        $meta_key = $this->get_meta_key();
-        $value = get_user_meta($user_id, $meta_key, true);
-
-        // Handle empty values
-        if (empty($value) && $value !== '0') {
-            return '-';
+        // Handle arrays (serialized data)
+        if (is_array($value)) {
+            $value = implode(', ', array_filter($value));
+            if (empty($value)) {
+                return $this->get_empty_char();
+            }
         }
 
         // Return the value (sanitized for display)
@@ -95,7 +145,7 @@ class Column extends AC\Column
         /**
          * Example #1 - A custom editing model. Create your own input field and set how you want your data to be saved
          */
-        return new Editing($this->profile_field_slug);
+        return new Editing($this->get_profile_field_slug());
 
         /**
          * Example #2 - A `Text` input field for a custom field value
@@ -114,7 +164,7 @@ class Column extends AC\Column
         /**
          * Example #1 - Write your own custom sorting query using this model
          */
-        return new Sorting($this->profile_field_slug);
+        return new Sorting($this->get_profile_field_slug());
 
         /**
          * Example #2 - Sorting by custom field values on the posts table
@@ -149,7 +199,7 @@ class Column extends AC\Column
         /**
          * Example #1 - A custom export model
          */
-        return new Export($this->profile_field_slug);
+        return new Export($this->get_profile_field_slug());
 
         /**
          * Example #2 - Export a custom field value
@@ -173,7 +223,7 @@ class Column extends AC\Column
         /**
          * Example #1 - A custom filtering model
          */
-        return new Search($this->profile_field_slug);
+        return new Search($this->get_profile_field_slug());
 
         /**
          * Example #2 - Filter by custom field values

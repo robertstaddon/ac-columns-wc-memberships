@@ -33,12 +33,12 @@ class Export implements Service
     public function get_value($id)
     {
         // Get the post author ID (user ID) from the membership post
-        $post = get_post($id);
-        if (!$post || !$post->post_author) {
+        $user_id = (int) get_post_field('post_author', $id);
+        
+        if (!$user_id) {
             return '';
         }
 
-        $user_id = (int) $post->post_author;
         $meta_key = $this->get_meta_key();
         
         // Return the value you would like to be exported from user meta
