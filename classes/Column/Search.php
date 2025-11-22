@@ -15,8 +15,15 @@ use ACP\Search\Value;
 class Search extends Comparison
 {
 
-    public function __construct()
+    /**
+     * @var string Profile field slug
+     */
+    private $profile_field_slug;
+
+    public function __construct(string $profile_field_slug = '')
     {
+        $this->profile_field_slug = $profile_field_slug;
+
         $operators = new Operators([
 
             // Available operators:
@@ -43,6 +50,16 @@ class Search extends Comparison
         parent::__construct($operators, $value);
     }
 
+    /**
+     * Get the meta key for this profile field.
+     *
+     * @return string
+     */
+    private function get_meta_key(): string
+    {
+        return '_wc_memberships_profile_field_' . $this->profile_field_slug;
+    }
+
     protected function create_query_bindings(string $operator, Value $value): Bindings
     {
         /**
@@ -51,26 +68,19 @@ class Search extends Comparison
         $binding = new Bindings();
 
         /**
-         * Example #1 - altering the WP_Meta_Query
-         * @see WP_Meta_Query
-         */
-        $binding->meta_query([
-            'key'     => 'my_custom_field_key',
-            'value'   => $value->get_value(),
-            'compare' => $operator,
-        ]);
-
-        /**
-         * Example #2 - altering the query with custom SQL
+         * Altering the query with custom SQL to search user meta
+         * Profile fields are stored in wp_usermeta, but we need to join via wp_posts.post_author
          * @see Query\Post This service handler parses the SQL bindings into `WP_Query`
          * @see WP_Query::get_posts This object runs the SQL query
          */
         global $wpdb;
 
-        // 1. You can 'JOIN' tables together like so:
+        $meta_key = $this->get_meta_key();
+
+        // 1. Join wp_usermeta table via post_author relationship
         $binding->join(
-            "INNER JOIN $wpdb->postmeta AS ac_filter ON $wpdb->posts.ID = ac_filter.post_id 
-                AND ac_filter.meta_key = 'my_custom_field_key'"
+            "INNER JOIN {$wpdb->usermeta} AS ac_filter ON {$wpdb->posts}.post_author = ac_filter.user_id 
+                AND ac_filter.meta_key = " . $wpdb->prepare('%s', $meta_key)
         );
 
         // 2. Create the `WHERE` clause. Use the `ComparisonFactory` to create a where-statement by operator (equal, contains etc.)

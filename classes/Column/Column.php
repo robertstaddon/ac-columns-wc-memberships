@@ -13,13 +13,52 @@ class Column extends AC\Column
     implements ACP\Editing\Editable, ACP\Sorting\Sortable, ACP\Export\Exportable, ACP\Search\Searchable
 {
 
-    public function __construct()
+    /**
+     * @var string Profile field slug
+     */
+    private $profile_field_slug;
+
+    /**
+     * @var string Profile field label
+     */
+    private $profile_field_label;
+
+    public function __construct(string $profile_field_slug = '', string $profile_field_label = '')
     {
+        $this->profile_field_slug = $profile_field_slug;
+        $this->profile_field_label = $profile_field_label;
+
         // Identifier, pick a unique name. Single word, no spaces. Underscores allowed.
-        $this->set_type('ac-COLUMN_NAME');
+        // Include profile field slug for uniqueness
+        $type = 'ac-wc-memberships-profile-field';
+        if (!empty($profile_field_slug)) {
+            $type .= '-' . sanitize_key($profile_field_slug);
+        }
+        $this->set_type($type);
 
         // Default column label.
-        $this->set_label(__('COLUMN_LABEL', 'ac-column-template'));
+        $label = !empty($profile_field_label) ? $profile_field_label : __('Profile Field', 'ac-column-template');
+        $this->set_label($label);
+    }
+
+    /**
+     * Get the profile field slug.
+     *
+     * @return string
+     */
+    public function get_profile_field_slug(): string
+    {
+        return $this->profile_field_slug;
+    }
+
+    /**
+     * Get the meta key for this profile field.
+     *
+     * @return string
+     */
+    public function get_meta_key(): string
+    {
+        return '_wc_memberships_profile_field_' . $this->profile_field_slug;
     }
 
     /**
@@ -27,14 +66,23 @@ class Column extends AC\Column
      */
     public function get_value($id): string
     {
-        // put all the column logic here to retrieve the value you need
-        // For example:
-        $value = get_post_meta($id, 'my_custom_field_key', true) ?: '-';
+        // Get the post author ID (user ID) from the membership post
+        $post = get_post($id);
+        if (!$post || !$post->post_author) {
+            return '-';
+        }
 
-        // Optionally you can change the display of the value. In this example we added an edit post link.
-        $value = "<a href='" . get_edit_post_link($id) . "'>$value</a>";
+        $user_id = (int) $post->post_author;
+        $meta_key = $this->get_meta_key();
+        $value = get_user_meta($user_id, $meta_key, true);
 
-        return $value;
+        // Handle empty values
+        if (empty($value) && $value !== '0') {
+            return '-';
+        }
+
+        // Return the value (sanitized for display)
+        return esc_html($value);
     }
 
     /**
@@ -47,7 +95,7 @@ class Column extends AC\Column
         /**
          * Example #1 - A custom editing model. Create your own input field and set how you want your data to be saved
          */
-        return new Editing();
+        return new Editing($this->profile_field_slug);
 
         /**
          * Example #2 - A `Text` input field for a custom field value
@@ -66,7 +114,7 @@ class Column extends AC\Column
         /**
          * Example #1 - Write your own custom sorting query using this model
          */
-        return new Sorting();
+        return new Sorting($this->profile_field_slug);
 
         /**
          * Example #2 - Sorting by custom field values on the posts table
@@ -101,7 +149,7 @@ class Column extends AC\Column
         /**
          * Example #1 - A custom export model
          */
-        return new Export();
+        return new Export($this->profile_field_slug);
 
         /**
          * Example #2 - Export a custom field value
@@ -125,7 +173,7 @@ class Column extends AC\Column
         /**
          * Example #1 - A custom filtering model
          */
-        return new Search();
+        return new Search($this->profile_field_slug);
 
         /**
          * Example #2 - Filter by custom field values

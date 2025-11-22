@@ -13,6 +13,26 @@ use ACP\Sorting\Type\Order;
 class Sorting implements QueryBindings
 {
 
+    /**
+     * @var string Profile field slug
+     */
+    private $profile_field_slug;
+
+    public function __construct(string $profile_field_slug = '')
+    {
+        $this->profile_field_slug = $profile_field_slug;
+    }
+
+    /**
+     * Get the meta key for this profile field.
+     *
+     * @return string
+     */
+    private function get_meta_key(): string
+    {
+        return '_wc_memberships_profile_field_' . $this->profile_field_slug;
+    }
+
     public function create_query_bindings(Order $order): Bindings
     {
         global $wpdb;
@@ -22,15 +42,12 @@ class Sorting implements QueryBindings
          */
         $bindings = new Bindings();
 
-        // 1. You can 'JOIN' tables together like so:
-        $bindings->join(
-            "LEFT JOIN $wpdb->postmeta AS ac_sort ON $wpdb->posts.ID = ac_sort.post_id
-                AND ac_sort.meta_key = 'my_custom_field_key'"
-        );
+        $meta_key = $this->get_meta_key();
 
-        // 2. Set the 'ORDER BY' statement:
-        $bindings->order_by(
-            "ac_sort.meta_value " . $order
+        // 1. Join wp_usermeta table via post_author relationship
+        $bindings->join(
+            "LEFT JOIN {$wpdb->usermeta} AS ac_sort ON {$wpdb->posts}.post_author = ac_sort.user_id
+                AND ac_sort.meta_key = " . $wpdb->prepare('%s', $meta_key)
         );
 
         // 2. Optionally: if you want your empty results at the bottom, you can
@@ -41,7 +58,7 @@ class Sorting implements QueryBindings
 
         // 3. Optionally: set the 'GROUP BY' to groups the results
         $bindings->group_by(
-            "$wpdb->posts.ID"
+            "{$wpdb->posts}.ID"
         );
 
         /**
