@@ -4,7 +4,7 @@ Author: Abundant Designs LLC
 Tags: admin-columns, woocommerce, memberships, profile-fields, columns
 Requires at least: 3.5
 Tested up to: 6.4
-Stable tag: 1.2
+Stable tag: 1.3
 Requires PHP: 7.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -20,6 +20,7 @@ This plugin extends Admin Columns Pro to automatically display WooCommerce Membe
 * Automatic discovery of WooCommerce Memberships Profile Fields
 * Dynamic column creation for each profile field
 * Full Admin Columns Pro integration (editing, export, search, sorting)
+* Dropdown filters with all available values for easy filtering
 * Retrieves values from membership owner's user meta
 * Works seamlessly with existing Admin Columns Pro settings
 
@@ -57,6 +58,20 @@ Yes! Each column supports inline and bulk editing through Admin Columns Pro's ed
 No configuration needed. The plugin automatically discovers and creates columns for all existing profile fields.
 
 == Changelog ==
+
+= 1.3 =
+* Added dropdown filter with all available values for each profile field
+* Added automatic discovery and population of filter dropdown options from existing user meta values
+* Changed search/filter functionality to use dropdown select instead of plain text input
+* Improved handling of serialized array values in filter dropdown
+
+= 1.2 =
+* Fixed profile field slug extraction from column type when columns are loaded from saved configurations
+* Fixed inline editing not saving values by ensuring profile field slug is correctly passed to supporting classes
+* Fixed meta key construction to include profile field slug in all cases
+* Updated all supporting class instantiation methods to use get_profile_field_slug() method
+* Improved user ID retrieval consistency across all classes using get_post_field()
+* Columns now properly categorized under "woocommerce" group instead of "custom"
 
 = 1.1 =
 * Added dynamic column creation for WooCommerce Memberships Profile Fields

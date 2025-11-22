@@ -2,17 +2,20 @@
 
 namespace AcColumnTemplate\Column;
 
+use AC\Helper\Select\Options;
 use ACP\Query;
 use ACP\Query\Bindings;
 use ACP\Search\Comparison;
+use ACP\Search\Comparison\Values;
 use ACP\Search\Helper\Sql\ComparisonFactory;
 use ACP\Search\Operators;
 use ACP\Search\Value;
 
 /**
  * Search class. Adds smart filtering functionality to the column.
+ * Provides a dropdown filter with all available values for the profile field.
  */
-class Search extends Comparison
+class Search extends Comparison implements Values
 {
 
     /**
@@ -20,24 +23,18 @@ class Search extends Comparison
      */
     private $profile_field_slug;
 
+    /**
+     * @var array Cached list of available values
+     */
+    private $values_cache = null;
+
     public function __construct(string $profile_field_slug = '')
     {
         $this->profile_field_slug = $profile_field_slug;
 
+        // For dropdown/select, we only need EQ (equal) operator
         $operators = new Operators([
-
-            // Available operators:
-            // Operators::EQ = equal
-            // Operators::NEQ = not Equal
-            // Operators::CONTAINS = Matches a part of a string
-            // Operators::NOT_CONTAINS
-            // Operators::GT = Greater than
-            // Operators::LT = Less than
-            // Operators::IS_EMPTY
-            // Operators::NOT_IS_EMPTY
-            // Operators::BETWEEN
             Operators::EQ,
-            Operators::CONTAINS,
         ]);
 
         // Available value types:
@@ -58,6 +55,64 @@ class Search extends Comparison
     private function get_meta_key(): string
     {
         return '_wc_memberships_profile_field_' . $this->profile_field_slug;
+    }
+
+    /**
+     * Get all unique values for this profile field from user meta.
+     * Used to populate the dropdown filter.
+     *
+     * @return Options Options object with value => label pairs
+     */
+    public function get_values(): Options
+    {
+        // Return cached values if available
+        if ($this->values_cache !== null) {
+            return Options::create_from_array($this->values_cache);
+        }
+
+        // Safety check: return empty options if slug is empty
+        if (empty($this->profile_field_slug)) {
+            $this->values_cache = [];
+            return Options::create_from_array([]);
+        }
+
+        global $wpdb;
+
+        $meta_key = $this->get_meta_key();
+        $values = [];
+
+        // Query all distinct values for this profile field from user meta
+        $meta_values = $wpdb->get_col(
+            $wpdb->prepare(
+                "SELECT DISTINCT meta_value 
+                FROM {$wpdb->usermeta} 
+                WHERE meta_key = %s 
+                AND meta_value != '' 
+                AND meta_value IS NOT NULL
+                ORDER BY meta_value ASC",
+                $meta_key
+            )
+        );
+
+        // Create value => label pairs (using value as both key and label)
+        foreach ($meta_values as $meta_value) {
+            // Handle serialized arrays
+            if (is_serialized($meta_value)) {
+                $unserialized = maybe_unserialize($meta_value);
+                if (is_array($unserialized)) {
+                    $meta_value = implode(', ', array_filter($unserialized));
+                }
+            }
+
+            // Use the value as both key and label
+            $values[$meta_value] = $meta_value;
+        }
+
+        // Cache the values array (not the Options object)
+        $this->values_cache = $values;
+
+        // Return Options object created from the array
+        return Options::create_from_array($values);
     }
 
     protected function create_query_bindings(string $operator, Value $value): Bindings

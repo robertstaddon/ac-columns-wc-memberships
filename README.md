@@ -9,7 +9,7 @@ This plugin extends Admin Columns Pro to dynamically display WooCommerce Members
 - **Display**: Shows profile field values from the membership owner's user meta
 - **Editing**: Inline and bulk editing capabilities
 - **Export**: CSV export support
-- **Search**: Smart filtering by profile field values
+- **Search**: Dropdown filters with all available values for easy filtering
 - **Sorting**: Sort memberships by profile field values
 
 ## Requirements

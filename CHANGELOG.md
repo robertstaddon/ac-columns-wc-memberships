@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3] - 2024-12-19
+
+### Added
+- Dropdown filter with all available values for each profile field
+- Automatic discovery and population of filter dropdown options from existing user meta values
+- Value caching for improved filter performance
+
+### Changed
+- Search/filter functionality now uses dropdown select instead of plain text input
+- Filter now shows only exact match (EQ) operator for better dropdown compatibility
+- Improved handling of serialized array values in filter dropdown
+
 ## [1.2] - 2024-12-19
 
 ### Fixed
