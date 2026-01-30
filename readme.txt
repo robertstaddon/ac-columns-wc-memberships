@@ -4,7 +4,7 @@ Author: Abundant Designs LLC
 Tags: admin-columns, woocommerce, memberships, profile-fields, columns
 Requires at least: 5.0
 Tested up to: 6.7
-Stable tag: 2.0
+Stable tag: 2.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -58,6 +58,12 @@ Yes! Each column supports inline and bulk editing through Admin Columns Pro's ed
 No configuration needed. The plugin automatically discovers and creates columns for all existing profile fields.
 
 == Changelog ==
+
+= 2.1 =
+* Fixed sorting fatal error: SqlOrderByFactory::create() now receives a string (order name with ASC fallback) for Admin Columns Pro 7 compatibility
+* Fixed export fatal: export column values now use AC\Formatter (ExportFormatter) in FormatterCollection
+* Fixed column registration: register class name strings and dynamic subclasses; Column resolves AdvancedColumnFactory dependencies from AC DI container
+* Fixed ValueFormatter: format() signature and Value API for AC\Formatter compatibility
 
 = 2.0 =
 * Upgraded for Admin Columns Pro 7 (breaking change; v6 no longer supported)

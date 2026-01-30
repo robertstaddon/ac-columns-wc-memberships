@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace AcColumnTemplate\Column;
 
 use AC;
+use AC\Setting\DefaultSettingsBuilder;
 use ACP;
+use ACP\Column\FeatureSettingBuilderFactory;
 use AcColumnTemplate\Formatter\ValueFormatter;
 
 /**
@@ -24,6 +26,15 @@ class Column extends ACP\Column\AdvancedColumnFactory
     {
         $this->profile_field_slug = $profile_field_slug;
         $this->profile_field_label = $profile_field_label;
+
+        $container = \ac_wc_memberships_get_ac_container();
+        if ($container === null) {
+            throw new \RuntimeException('Admin Columns Pro container not available. Ensure ac-columns-wc-memberships loads after Admin Columns Pro and acp/init has run.');
+        }
+        $feature_setting_builder_factory = $container->get(FeatureSettingBuilderFactory::class);
+        $default_settings_builder = $container->get(DefaultSettingsBuilder::class);
+
+        parent::__construct($feature_setting_builder_factory, $default_settings_builder);
     }
 
     public function get_label(): string
@@ -95,7 +106,7 @@ class Column extends ACP\Column\AdvancedColumnFactory
     protected function get_export(AC\Setting\Config $config): ?AC\FormatterCollection
     {
         return new AC\FormatterCollection([
-            new Export($this->get_profile_field_slug()),
+            new \AcColumnTemplate\Formatter\ExportFormatter($this->get_profile_field_slug()),
         ]);
     }
 }

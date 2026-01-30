@@ -55,7 +55,7 @@ class Sorting implements QueryBindings
         // 2. Optionally: if you want your empty results at the bottom, you can
         // use this factory which will create the correct 'ORDER BY' statement for you
         $bindings->order_by(
-            SqlOrderByFactory::create("ac_sort.meta_value", $order)
+            SqlOrderByFactory::create("ac_sort.meta_value", $order->name ?? 'ASC')
         );
 
         // 3. Optionally: set the 'GROUP BY' to groups the results

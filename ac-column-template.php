@@ -3,12 +3,36 @@
  * Plugin Name: Admin Columns - WooCommerce Memberships Profile Fields
  * Plugin URI: https://admincolumns.com
  * Description: Dynamic columns for WooCommerce Memberships Profile Fields in Admin Columns Pro
- * Version: 2.0
+ * Version: 2.1
  * Author: Abundant Designs LLC
  * Requires PHP: 7.4
  */
 
 const AC_CT_FILE = __FILE__;
+
+/**
+ * Store the AC/ACP DI container when acp/init runs (Loader.php line 255).
+ * Used by Column to resolve FeatureSettingBuilderFactory and DefaultSettingsBuilder.
+ */
+add_action('acp/init', static function ( $container, $plugin ): void {
+    ac_wc_memberships_set_ac_container($container);
+}, 10, 2);
+
+/**
+ * @param \Psr\Container\ContainerInterface|null $container
+ */
+function ac_wc_memberships_set_ac_container( $container ): void {
+    $GLOBALS['ac_wc_memberships_ac_container'] = $container;
+}
+
+/**
+ * Get the AC/ACP DI container (set on acp/init). Required for Column parent constructor.
+ *
+ * @return \Psr\Container\ContainerInterface|null
+ */
+function ac_wc_memberships_get_ac_container() {
+    return $GLOBALS['ac_wc_memberships_ac_container'] ?? null;
+}
 
 /**
  * Discover WooCommerce Memberships Profile Fields by querying user meta keys.
@@ -46,6 +70,31 @@ function ac_wc_memberships_get_profile_fields(): array {
     return $profile_fields;
 }
 
+/**
+ * Ensure a concrete Column subclass exists for the given profile field; return its FQCN.
+ * AC7 expects class name strings, so we create one named subclass per profile field.
+ *
+ * @param string $slug  Profile field slug
+ * @param string $label Profile field label
+ * @return string Fully qualified class name
+ */
+function ac_wc_memberships_profile_field_column_class(string $slug, string $label): string {
+    $safe_slug = preg_replace('/[^a-zA-Z0-9_]/', '_', $slug);
+    $short_name = 'ProfileFieldColumn_' . ($safe_slug !== '' ? $safe_slug : 'default');
+    $fqcn = 'AcColumnTemplate\Column\\' . $short_name;
+
+    if (!class_exists($fqcn)) {
+        $slug_export = var_export($slug, true);
+        $label_export = var_export($label, true);
+        eval(
+            "namespace AcColumnTemplate\Column; class {$short_name} extends Column { " .
+            "public function __construct() { parent::__construct({$slug_export}, {$label_export}); } }"
+        );
+    }
+
+    return $fqcn;
+}
+
 // Register column types for Admin Columns Pro 7
 add_filter('ac/column/types/pro', static function (array $factories, AC\TableScreen $table_screen): array {
     // Only register for wc_user_membership post type (User Memberships)
@@ -54,9 +103,9 @@ add_filter('ac/column/types/pro', static function (array $factories, AC\TableScr
         return $factories;
     }
 
-    require_once __DIR__ . '/classes/Column/ColumnFactory.php';
     require_once __DIR__ . '/classes/Column/Column.php';
     require_once __DIR__ . '/classes/Formatter/ValueFormatter.php';
+    require_once __DIR__ . '/classes/Formatter/ExportFormatter.php';
     require_once __DIR__ . '/classes/Column/Editing.php';
     require_once __DIR__ . '/classes/Column/Export.php';
     require_once __DIR__ . '/classes/Column/Search.php';
@@ -65,7 +114,7 @@ add_filter('ac/column/types/pro', static function (array $factories, AC\TableScr
     $profile_fields = ac_wc_memberships_get_profile_fields();
 
     foreach ($profile_fields as $slug => $label) {
-        $factories[] = new AcColumnTemplate\Column\ColumnFactory($slug, $label);
+        $factories[] = ac_wc_memberships_profile_field_column_class($slug, $label);
     }
 
     return $factories;

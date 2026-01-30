@@ -8,10 +8,10 @@ use AC;
 use AC\Type\Value;
 
 /**
- * Formatter for WooCommerce Memberships profile field column value.
- * Retrieves value from membership owner's user meta and formats for display.
+ * Formatter for WooCommerce Memberships profile field column export (CSV).
+ * Retrieves value from membership owner's user meta; plain string, no HTML escaping.
  */
-class ValueFormatter implements AC\Formatter
+class ExportFormatter implements AC\Formatter
 {
 
     private string $profile_field_slug;
@@ -27,7 +27,7 @@ class ValueFormatter implements AC\Formatter
     }
 
     /**
-     * Format the value for display in the list table (AC7: single Value param, return Value).
+     * Format the value for export (AC7: single Value param, return Value).
      */
     public function format(Value $value): Value
     {
@@ -50,6 +50,6 @@ class ValueFormatter implements AC\Formatter
             }
         }
 
-        return $value->with_value(\esc_html((string) $raw));
+        return $value->with_value((string) $raw);
     }
 }
