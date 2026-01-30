@@ -3,9 +3,9 @@
  * Plugin Name: Admin Columns - WooCommerce Memberships Profile Fields
  * Plugin URI: https://admincolumns.com
  * Description: Dynamic columns for WooCommerce Memberships Profile Fields in Admin Columns Pro
- * Version: 1.3
+ * Version: 2.0
  * Author: Abundant Designs LLC
- * Requires PHP: 7.2
+ * Requires PHP: 7.4
  */
 
 const AC_CT_FILE = __FILE__;
@@ -46,34 +46,30 @@ function ac_wc_memberships_get_profile_fields(): array {
     return $profile_fields;
 }
 
-// 1. Register column type
-add_action('acp/column_types', static function (AC\ListScreen $list_screen): void {
-    // Check for version requirement
-    if (ACP()->get_version()->is_lte(new AC\Plugin\Version('6.3'))) {
-        return;
+// Register column types for Admin Columns Pro 7
+add_filter('ac/column/types/pro', static function (array $factories, AC\TableScreen $table_screen): array {
+    // Only register for wc_user_membership post type (User Memberships)
+    $list_screen_key = method_exists($table_screen, 'get_key') ? (string) $table_screen->get_key() : (string) $table_screen->get_id();
+    if ('wc_user_membership' !== $list_screen_key) {
+        return $factories;
     }
 
-    // Only register for wc_user_membership post type
-    if ('wc_user_membership' !== $list_screen->get_key()) {
-        return;
-    }
-
-    // Load necessary files
+    require_once __DIR__ . '/classes/Column/ColumnFactory.php';
     require_once __DIR__ . '/classes/Column/Column.php';
+    require_once __DIR__ . '/classes/Formatter/ValueFormatter.php';
     require_once __DIR__ . '/classes/Column/Editing.php';
     require_once __DIR__ . '/classes/Column/Export.php';
     require_once __DIR__ . '/classes/Column/Search.php';
     require_once __DIR__ . '/classes/Column/Sorting.php';
 
-    // Discover profile fields and register a column for each
     $profile_fields = ac_wc_memberships_get_profile_fields();
 
     foreach ($profile_fields as $slug => $label) {
-        $list_screen->register_column_type(
-            new AcColumnTemplate\Column\Column($slug, $label)
-        );
+        $factories[] = new AcColumnTemplate\Column\ColumnFactory($slug, $label);
     }
-});
+
+    return $factories;
+}, 10, 2);
 
 // 2. Optionally: load a text domain
 // load_plugin_textdomain('ac-column-template', false, __DIR__ . '/languages/');

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace AcColumnTemplate\Column;
 
 use AC\Helper\Select\Options;

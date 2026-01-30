@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0] - 2026-01-30
+
+### Added
+- Support for Admin Columns Pro 7
+- `ColumnFactory` for dynamic column registration (one factory per profile field)
+- `ValueFormatter` for list table display via `AC\FormatterCollection`
+
+### Changed
+- **Breaking:** Requires Admin Columns Pro 7.0+ (v6 no longer supported)
+- **Breaking:** Requires PHP 7.4+
+- Column registration: `add_action('acp/column_types')` replaced by `add_filter('ac/column/types/pro')`
+- Column base class: `AC\Column` replaced by `ACP\Column\AdvancedColumnFactory`
+- Display: `get_value($id)` replaced by `get_formatters(Config)` returning `AC\FormatterCollection`
+- Features: `editing()` / `sorting()` / `export()` / `search()` replaced by `get_editing()` / `get_sorting()` / `get_export()` / `get_search()` with `AC\Setting\Config`
+- List screen check uses `AC\TableScreen` and `get_key()` / `get_id()` for `wc_user_membership`
+
+### Removed
+- Version check for Admin Columns 6.3
+- Direct `register_column_type(new Column(...))` in favor of factory instances
+
 ## [1.3] - 2024-12-19
 
 ### Added

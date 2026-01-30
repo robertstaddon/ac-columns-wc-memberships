@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace AcColumnTemplate\Column;
 
 use ACP;
@@ -34,16 +36,11 @@ class Editing implements ACP\Editing\Service
     public function get_value(int $id)
     {
         // Get the post author ID (user ID) from the membership post
-        $user_id = (int) get_post_field('post_author', $id);
-        
+        $user_id = (int) \get_post_field('post_author', $id);
         if (!$user_id) {
             return '';
         }
-
-        $meta_key = $this->get_meta_key();
-        
-        // Retrieve the value for editing from user meta
-        return get_user_meta($user_id, $meta_key, true);
+        return \get_user_meta($user_id, $this->get_meta_key(), true);
     }
 
     /**
@@ -103,16 +100,11 @@ class Editing implements ACP\Editing\Service
     public function update(int $id, $data): void
     {
         // Get the post author ID (user ID) from the membership post
-        $user_id = (int) get_post_field('post_author', $id);
-        
+        $user_id = (int) \get_post_field('post_author', $id);
         if (!$user_id) {
             return;
         }
-
-        $meta_key = $this->get_meta_key();
-        
-        // Store the value in user meta
-        update_user_meta($user_id, $meta_key, $data);
+        \update_user_meta($user_id, $this->get_meta_key(), $data);
     }
 
 }

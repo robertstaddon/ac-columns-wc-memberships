@@ -1,30 +1,25 @@
 <?php
 
+declare(strict_types=1);
+
 namespace AcColumnTemplate\Column;
 
 use ACP\Export\Service;
 
 /**
- * Export class. Adds export functionality to the column.
+ * Export formatter for WooCommerce Memberships profile field column (Admin Columns Pro 7).
+ * Used inside AC\FormatterCollection for CSV export.
  */
 class Export implements Service
 {
 
-    /**
-     * @var string Profile field slug
-     */
-    private $profile_field_slug;
+    private string $profile_field_slug;
 
     public function __construct(string $profile_field_slug = '')
     {
         $this->profile_field_slug = $profile_field_slug;
     }
 
-    /**
-     * Get the meta key for this profile field.
-     *
-     * @return string
-     */
     private function get_meta_key(): string
     {
         return '_wc_memberships_profile_field_' . $this->profile_field_slug;
@@ -32,17 +27,10 @@ class Export implements Service
 
     public function get_value($id)
     {
-        // Get the post author ID (user ID) from the membership post
-        $user_id = (int) get_post_field('post_author', $id);
-        
+        $user_id = (int) \get_post_field('post_author', $id);
         if (!$user_id) {
             return '';
         }
-
-        $meta_key = $this->get_meta_key();
-        
-        // Return the value you would like to be exported from user meta
-        return get_user_meta($user_id, $meta_key, true);
+        return \get_user_meta($user_id, $this->get_meta_key(), true);
     }
-
 }
