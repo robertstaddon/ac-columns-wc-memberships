@@ -13,6 +13,10 @@ use AcColumnTemplate\Formatter\ValueFormatter;
 /**
  * Column for a single WooCommerce Memberships profile field (Admin Columns Pro 7).
  *
+ * Dependencies (FeatureSettingBuilderFactory, DefaultSettingsBuilder) are injected
+ * at construction; the caller is responsible for resolving them (e.g. from the AC
+ * container when registering column types).
+ *
  * @link https://docs.admincolumns.com/article/21-how-to-create-my-own-column
  */
 class Column extends ACP\Column\AdvancedColumnFactory
@@ -22,35 +26,26 @@ class Column extends ACP\Column\AdvancedColumnFactory
 
     private string $profile_field_label;
 
-    public function __construct(string $profile_field_slug = '', string $profile_field_label = '')
-    {
+    public function __construct(
+        string $profile_field_slug,
+        string $profile_field_label,
+        FeatureSettingBuilderFactory $feature_setting_builder_factory,
+        DefaultSettingsBuilder $default_settings_builder
+    ) {
         $this->profile_field_slug = $profile_field_slug;
         $this->profile_field_label = $profile_field_label;
-
-        $container = \ac_wc_memberships_get_ac_container();
-        if ($container === null) {
-            throw new \RuntimeException('Admin Columns Pro container not available. Ensure ac-columns-wc-memberships loads after Admin Columns Pro and acp/init has run.');
-        }
-        $feature_setting_builder_factory = $container->get(FeatureSettingBuilderFactory::class);
-        $default_settings_builder = $container->get(DefaultSettingsBuilder::class);
 
         parent::__construct($feature_setting_builder_factory, $default_settings_builder);
     }
 
     public function get_label(): string
     {
-        return $this->profile_field_label !== ''
-            ? $this->profile_field_label
-            : \__('Profile Field', 'ac-column-template');
+        return $this->profile_field_label;
     }
 
     public function get_column_type(): string
     {
-        $type = 'ac-wc-memberships-profile-field';
-        if ($this->profile_field_slug !== '') {
-            $type .= '-' . \sanitize_key($this->profile_field_slug);
-        }
-        return $type;
+        return 'ac-wc-memberships-profile-field-' . \sanitize_key($this->profile_field_slug);
     }
 
     /**
@@ -103,10 +98,5 @@ class Column extends ACP\Column\AdvancedColumnFactory
         return new Search($this->get_profile_field_slug());
     }
 
-    protected function get_export(AC\Setting\Config $config): ?AC\FormatterCollection
-    {
-        return new AC\FormatterCollection([
-            new \AcColumnTemplate\Formatter\ExportFormatter($this->get_profile_field_slug()),
-        ]);
-    }
+    // get_export omitted: same formatter as display (get_formatters) is used for export
 }

@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2] - 2026-02-04
+
+### Changed
+- Column constructor now receives dependencies (`FeatureSettingBuilderFactory`, `DefaultSettingsBuilder`) explicitly; resolved at instantiation in generated subclass, not inside Column (per Admin Columns developer feedback)
+- Validation of `profile_slug` and `label` moved outside Column to `ac_wc_memberships_profile_field_column_class()`; Column assumes validated input
+
+### Removed
+- `get_export()` override; display and export both use `ValueFormatter` via `get_formatters()`
+- `Formatter\ExportFormatter.php` (redundant with ValueFormatter)
+- `Column\Export.php` (unused export service class)
+
 ## [2.1] - 2026-01-30
 
 ### Fixed

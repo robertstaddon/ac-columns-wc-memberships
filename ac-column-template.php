@@ -3,7 +3,7 @@
  * Plugin Name: Admin Columns - WooCommerce Memberships Profile Fields
  * Plugin URI: https://admincolumns.com
  * Description: Dynamic columns for WooCommerce Memberships Profile Fields in Admin Columns Pro
- * Version: 2.1
+ * Version: 2.2
  * Author: Abundant Designs LLC
  * Requires PHP: 7.4
  */
@@ -12,7 +12,8 @@ const AC_CT_FILE = __FILE__;
 
 /**
  * Store the AC/ACP DI container when acp/init runs (Loader.php line 255).
- * Used by Column to resolve FeatureSettingBuilderFactory and DefaultSettingsBuilder.
+ * Used only when instantiating column subclasses to resolve FeatureSettingBuilderFactory
+ * and DefaultSettingsBuilder for the Column constructor (not inside Column itself).
  */
 add_action('acp/init', static function ( $container, $plugin ): void {
     ac_wc_memberships_set_ac_container($container);
@@ -26,7 +27,8 @@ function ac_wc_memberships_set_ac_container( $container ): void {
 }
 
 /**
- * Get the AC/ACP DI container (set on acp/init). Required for Column parent constructor.
+ * Get the AC/ACP DI container (set on acp/init). Used when creating column instances
+ * to resolve constructor dependencies, not inside the Column class.
  *
  * @return \Psr\Container\ContainerInterface|null
  */
@@ -73,12 +75,22 @@ function ac_wc_memberships_get_profile_fields(): array {
 /**
  * Ensure a concrete Column subclass exists for the given profile field; return its FQCN.
  * AC7 expects class name strings, so we create one named subclass per profile field.
+ * Dependencies are resolved here (at instantiation) and passed into the Column constructor.
  *
- * @param string $slug  Profile field slug
- * @param string $label Profile field label
+ * @param string $slug  Profile field slug (validated: non-empty, sanitized key)
+ * @param string $label Profile field label (validated: non-empty)
  * @return string Fully qualified class name
  */
 function ac_wc_memberships_profile_field_column_class(string $slug, string $label): string {
+    $slug = \sanitize_key($slug);
+    if ($slug === '') {
+        $slug = 'default';
+    }
+    $label = \trim($label);
+    if ($label === '') {
+        $label = \__('Profile Field', 'ac-column-template');
+    }
+
     $safe_slug = preg_replace('/[^a-zA-Z0-9_]/', '_', $slug);
     $short_name = 'ProfileFieldColumn_' . ($safe_slug !== '' ? $safe_slug : 'default');
     $fqcn = 'AcColumnTemplate\Column\\' . $short_name;
@@ -88,7 +100,11 @@ function ac_wc_memberships_profile_field_column_class(string $slug, string $labe
         $label_export = var_export($label, true);
         eval(
             "namespace AcColumnTemplate\Column; class {$short_name} extends Column { " .
-            "public function __construct() { parent::__construct({$slug_export}, {$label_export}); } }"
+            "public function __construct() { " .
+            "\$c = \\ac_wc_memberships_get_ac_container(); " .
+            "if (\$c === null) { throw new \\RuntimeException('Admin Columns Pro container not available.'); } " .
+            "parent::__construct({$slug_export}, {$label_export}, \$c->get(\\ACP\\Column\\FeatureSettingBuilderFactory::class), \$c->get(\\AC\\Setting\\DefaultSettingsBuilder::class)); " .
+            "} }"
         );
     }
 
@@ -105,9 +121,7 @@ add_filter('ac/column/types/pro', static function (array $factories, AC\TableScr
 
     require_once __DIR__ . '/classes/Column/Column.php';
     require_once __DIR__ . '/classes/Formatter/ValueFormatter.php';
-    require_once __DIR__ . '/classes/Formatter/ExportFormatter.php';
     require_once __DIR__ . '/classes/Column/Editing.php';
-    require_once __DIR__ . '/classes/Column/Export.php';
     require_once __DIR__ . '/classes/Column/Search.php';
     require_once __DIR__ . '/classes/Column/Sorting.php';
 
