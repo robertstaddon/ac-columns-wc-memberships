@@ -14,10 +14,10 @@ This plugin extends Admin Columns Pro to dynamically display WooCommerce Members
 
 ## Requirements
 
-- WordPress 3.5 or higher
-- Admin Columns Pro 6.3 or higher
+- WordPress 5.0 or higher
+- Admin Columns Pro 7.0 or higher
 - WooCommerce Memberships (with profile fields configured)
-- PHP 7.2 or higher
+- PHP 7.4 or higher
 
 ## Installation
 
@@ -37,10 +37,11 @@ The plugin automatically discovers WooCommerce Memberships Profile Fields by que
 
 ## Structure
 
-* `ac-column-template.php`: Main plugin file that discovers and registers columns
+* `ac-column-template.php`: Main plugin file that discovers profile fields and registers columns via AC's aggregate
+* `/classes/ColumnFactories/ProfileFieldsFactory.php`: Column factory collection (one Column per profile field; same pattern as ACP's ACF addon)
 * `/classes/Column/Column.php`: Column class with display logic
+* `/classes/Formatter/ValueFormatter.php`: Formatter for list table and export display
 * `/classes/Column/Editing.php`: Editing model for inline/bulk editing
-* `/classes/Column/Export.php`: Export model for CSV export
 * `/classes/Column/Search.php`: Search/filtering model
 * `/classes/Column/Sorting.php`: Sorting model
 * `/css`: CSS files (if needed)
