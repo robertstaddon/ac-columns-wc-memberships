@@ -3,7 +3,7 @@
  * Plugin Name: Admin Columns - WooCommerce Memberships Profile Fields
  * Plugin URI: https://admincolumns.com
  * Description: Dynamic columns for WooCommerce Memberships Profile Fields in Admin Columns Pro
- * Version: 2.2
+ * Version: 2.3
  * Author: Abundant Designs LLC
  * Requires PHP: 7.4
  */
@@ -12,11 +12,25 @@ const AC_CT_FILE = __FILE__;
 
 /**
  * Store the AC/ACP DI container when acp/init runs (Loader.php line 255).
- * Used only when instantiating column subclasses to resolve FeatureSettingBuilderFactory
- * and DefaultSettingsBuilder for the Column constructor (not inside Column itself).
+ * Used by ProfileFieldsFactory to resolve FeatureSettingBuilderFactory and
+ * DefaultSettingsBuilder when creating Column instances.
  */
 add_action('acp/init', static function ( $container, $plugin ): void {
     ac_wc_memberships_set_ac_container($container);
+
+    if ($container === null) {
+        return;
+    }
+
+    require_once __DIR__ . '/classes/Column/Column.php';
+    require_once __DIR__ . '/classes/Formatter/ValueFormatter.php';
+    require_once __DIR__ . '/classes/Column/Editing.php';
+    require_once __DIR__ . '/classes/Column/Search.php';
+    require_once __DIR__ . '/classes/Column/Sorting.php';
+    require_once __DIR__ . '/classes/ColumnFactories/ProfileFieldsFactory.php';
+
+    $factory = new \AcColumnTemplate\ColumnFactories\ProfileFieldsFactory($container);
+    \AC\ColumnFactories\Aggregate::add($factory);
 }, 10, 2);
 
 /**
@@ -27,8 +41,8 @@ function ac_wc_memberships_set_ac_container( $container ): void {
 }
 
 /**
- * Get the AC/ACP DI container (set on acp/init). Used when creating column instances
- * to resolve constructor dependencies, not inside the Column class.
+ * Get the AC/ACP DI container (set on acp/init). Used by ProfileFieldsFactory
+ * when creating Column instances.
  *
  * @return \Psr\Container\ContainerInterface|null
  */
@@ -72,67 +86,5 @@ function ac_wc_memberships_get_profile_fields(): array {
     return $profile_fields;
 }
 
-/**
- * Ensure a concrete Column subclass exists for the given profile field; return its FQCN.
- * AC7 expects class name strings, so we create one named subclass per profile field.
- * Dependencies are resolved here (at instantiation) and passed into the Column constructor.
- *
- * @param string $slug  Profile field slug (validated: non-empty, sanitized key)
- * @param string $label Profile field label (validated: non-empty)
- * @return string Fully qualified class name
- */
-function ac_wc_memberships_profile_field_column_class(string $slug, string $label): string {
-    $slug = \sanitize_key($slug);
-    if ($slug === '') {
-        $slug = 'default';
-    }
-    $label = \trim($label);
-    if ($label === '') {
-        $label = \__('Profile Field', 'ac-column-template');
-    }
-
-    $safe_slug = preg_replace('/[^a-zA-Z0-9_]/', '_', $slug);
-    $short_name = 'ProfileFieldColumn_' . ($safe_slug !== '' ? $safe_slug : 'default');
-    $fqcn = 'AcColumnTemplate\Column\\' . $short_name;
-
-    if (!class_exists($fqcn)) {
-        $slug_export = var_export($slug, true);
-        $label_export = var_export($label, true);
-        eval(
-            "namespace AcColumnTemplate\Column; class {$short_name} extends Column { " .
-            "public function __construct() { " .
-            "\$c = \\ac_wc_memberships_get_ac_container(); " .
-            "if (\$c === null) { throw new \\RuntimeException('Admin Columns Pro container not available.'); } " .
-            "parent::__construct({$slug_export}, {$label_export}, \$c->get(\\ACP\\Column\\FeatureSettingBuilderFactory::class), \$c->get(\\AC\\Setting\\DefaultSettingsBuilder::class)); " .
-            "} }"
-        );
-    }
-
-    return $fqcn;
-}
-
-// Register column types for Admin Columns Pro 7
-add_filter('ac/column/types/pro', static function (array $factories, AC\TableScreen $table_screen): array {
-    // Only register for wc_user_membership post type (User Memberships)
-    $list_screen_key = method_exists($table_screen, 'get_key') ? (string) $table_screen->get_key() : (string) $table_screen->get_id();
-    if ('wc_user_membership' !== $list_screen_key) {
-        return $factories;
-    }
-
-    require_once __DIR__ . '/classes/Column/Column.php';
-    require_once __DIR__ . '/classes/Formatter/ValueFormatter.php';
-    require_once __DIR__ . '/classes/Column/Editing.php';
-    require_once __DIR__ . '/classes/Column/Search.php';
-    require_once __DIR__ . '/classes/Column/Sorting.php';
-
-    $profile_fields = ac_wc_memberships_get_profile_fields();
-
-    foreach ($profile_fields as $slug => $label) {
-        $factories[] = ac_wc_memberships_profile_field_column_class($slug, $label);
-    }
-
-    return $factories;
-}, 10, 2);
-
-// 2. Optionally: load a text domain
+// Optionally: load a text domain
 // load_plugin_textdomain('ac-column-template', false, __DIR__ . '/languages/');

@@ -4,7 +4,7 @@ Author: Abundant Designs LLC
 Tags: admin-columns, woocommerce, memberships, profile-fields, columns
 Requires at least: 5.0
 Tested up to: 6.7
-Stable tag: 2.2
+Stable tag: 2.3
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -58,6 +58,11 @@ Yes! Each column supports inline and bulk editing through Admin Columns Pro's ed
 No configuration needed. The plugin automatically discovers and creates columns for all existing profile fields.
 
 == Changelog ==
+
+= 2.3 =
+* Column registration now uses AC\ColumnFactories\Aggregate and a ColumnFactoryCollectionFactory (same pattern as ACP's ACF addon)
+* Removed eval and ac/column/types/pro filter; one Column class, no generated subclasses
+* Added ProfileFieldsFactory (classes/ColumnFactories/ProfileFieldsFactory.php) to register profile field columns on acp/init
 
 = 2.2 =
 * Column constructor now receives dependencies (FeatureSettingBuilderFactory, DefaultSettingsBuilder) explicitly; resolved at instantiation in generated subclass, not inside Column (per AC developer feedback)
