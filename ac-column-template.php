@@ -9,10 +9,6 @@
  */
 
 add_action('acp/init', static function ($container, \ACP\AdminColumnsPro $plugin): void {
-    if ($plugin->get_version()->is_lt(new \AC\Plugin\Version('7'))) {
-        return;
-    }
-
     require_once __DIR__ . '/classes/Column/Column.php';
     require_once __DIR__ . '/classes/Formatter/ValueFormatter.php';
     require_once __DIR__ . '/classes/Column/Editing.php';
