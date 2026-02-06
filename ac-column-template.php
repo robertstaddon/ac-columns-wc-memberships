@@ -8,7 +8,7 @@
  * Requires PHP: 7.4
  */
 
-add_action('acp/init', static function ($container, \ACP\AdminColumnsPro $plugin): void {
+add_action('acp/init', static function ($container): void {
     require_once __DIR__ . '/classes/Column/Column.php';
     require_once __DIR__ . '/classes/Formatter/ValueFormatter.php';
     require_once __DIR__ . '/classes/Column/Editing.php';
@@ -19,4 +19,4 @@ add_action('acp/init', static function ($container, \ACP\AdminColumnsPro $plugin
     \AC\ColumnFactories\Aggregate::add(
         new \AcColumnTemplate\ColumnFactories\ProfileFieldsFactory($container)
     );
-}, 10, 2);
+});
