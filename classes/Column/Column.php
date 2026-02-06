@@ -19,7 +19,7 @@ use AcColumnTemplate\Formatter\ValueFormatter;
  *
  * @link https://docs.admincolumns.com/article/21-how-to-create-my-own-column
  */
-class Column extends ACP\Column\AdvancedColumnFactory
+class Column extends ACP\ColumnFactory\CustomFieldFactory
 {
 
     private string $profile_field_slug;
