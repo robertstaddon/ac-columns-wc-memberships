@@ -18,7 +18,7 @@ class Sorting implements QueryBindings
     /**
      * @var string Profile field slug
      */
-    private $profile_field_slug;
+    private string $profile_field_slug;
 
     public function __construct(string $profile_field_slug = '')
     {
