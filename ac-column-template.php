@@ -4,7 +4,8 @@
  * Plugin URI: https://admincolumns.com
  * Description: Dynamic columns for WooCommerce Memberships Profile Fields in Admin Columns Pro
  * Version: 2.3
- * Author: Abundant Designs LLC
+ * Author: Abundant Designs
+ * Author URI: https://www.abundantdesigns.com
  * Requires PHP: 7.4
  */
 
